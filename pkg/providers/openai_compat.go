@@ -7,9 +7,40 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"time"
 )
+
+type tlsLoggingTransport struct {
+	transport *http.Transport
+}
+
+func (t *tlsLoggingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	resp, err := t.transport.RoundTrip(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.TLS != nil {
+		slog.Debug("TLS connection established", "version", tlsVersionName(resp.TLS.Version))
+	}
+	return resp, nil
+}
+
+func tlsVersionName(v uint16) string {
+	switch v {
+	case tls.VersionTLS10:
+		return "TLS 1.0"
+	case tls.VersionTLS11:
+		return "TLS 1.1"
+	case tls.VersionTLS12:
+		return "TLS 1.2"
+	case tls.VersionTLS13:
+		return "TLS 1.3"
+	default:
+		return fmt.Sprintf("unknown (%d)", v)
+	}
+}
 
 type OpenAICompatProvider struct {
 	BaseURL string
@@ -22,9 +53,11 @@ func NewOpenAICompatProvider(baseURL, apiKey string) *OpenAICompatProvider {
 		MinVersion: tls.VersionTLS12,
 	}
 
-	transport := &http.Transport{
+	baseTransport := &http.Transport{
 		TLSClientConfig: tlsConfig,
 	}
+
+	transport := &tlsLoggingTransport{transport: baseTransport}
 
 	return &OpenAICompatProvider{
 		BaseURL: baseURL,

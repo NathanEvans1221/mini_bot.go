@@ -44,8 +44,12 @@ func SanitizeInput(input string) string {
 	input = strings.ReplaceAll(input, "</script>", "&lt;/script>")
 	input = strings.ReplaceAll(input, "{{", "&lbrace;&lbrace;")
 	input = strings.ReplaceAll(input, "}}", "&rbrace;&rbrace;")
+	input = strings.ReplaceAll(input, "{", "&#123;")
+	input = strings.ReplaceAll(input, "}", "&#125;")
+	input = strings.ReplaceAll(input, "[", "&#91;")
+	input = strings.ReplaceAll(input, "]", "&#93;")
 
-	return input
+	return "```user-input\n" + input + "\n```"
 }
 
 type Builder struct {

@@ -62,7 +62,7 @@ if !strings.HasPrefix(absTargetPath, s.Workspace) {
 - [x] 新增 `.env` 檔案支援，使用 `os.Getenv` 讀取敏感資訊
 - [x] 在 config.go 中優先讀取環境變數覆寫
 - [x] 範例 config.json 中移除所有敏感資訊，改用 placeholder
-- [ ] 新增提示訊息告知使用者勿提交包含密鑰的 config.json
+- [x] 新增提示訊息告知使用者勿提交包含密鑰的 config.json
 
 **參考實作位置**: `pkg/config/config.go:90-117`
 
@@ -75,10 +75,10 @@ if !strings.HasPrefix(absTargetPath, s.Workspace) {
 **問題**: 使用者輸入未經清理即存入記憶體，可能導致 Agent 行為被操縱。
 
 **修復任務**:
-- [ ] 新增輸入清理函數，檢測常見 injection 模式
-- [ ] 實作特殊字元轉義 (`<`, `>`, `{`, `}`, `[`, `]`)
-- [ ] 建立訊息長度限制
-- [ ] 考慮使用 Markdown code block 包裝使用者輸入
+- [x] 新增輸入清理函數，檢測常見 injection 模式
+- [x] 實作特殊字元轉義 (`<`, `>`, `{`, `}`, `[`, `]`)
+- [x] 建立訊息長度限制
+- [x] 考慮使用 Markdown code block 包裝使用者輸入
 
 **參考實作位置**: `pkg/agent/memory.go:25-35`
 
@@ -92,7 +92,7 @@ if !strings.HasPrefix(absTargetPath, s.Workspace) {
 - [x] 自訂 HTTP Client，強制 TLS 1.2+
 - [x] 啟用憑證驗證 (移除未驗證的 Transport)
 - [x] 新增連線逾時保護
-- [ ] 記錄 TLS 版本以供稽核
+- [x] 記錄 TLS 版本以供稽核
 
 **參考實作位置**: `pkg/providers/openai_compat.go:74`
 
@@ -104,8 +104,8 @@ if !strings.HasPrefix(absTargetPath, s.Workspace) {
 
 **修復任務**:
 - [x] 記憶體檔案使用 0600 權限
-- [ ] config 載入時驗證檔案權限，警告過於寬鬆的權限
-- [ ] 新增工作目錄隔離確認
+- [x] config 載入時驗證檔案權限，警告過於寬鬆的權限
+- [x] 新增工作目錄隔離確認
 
 **參考實作位置**: `pkg/tools/filesystem.go:76`
 
@@ -118,9 +118,9 @@ if !strings.HasPrefix(absTargetPath, s.Workspace) {
 **問題**: 無法防止 API 濫用或 DoS 攻擊。
 
 **修復任務**:
-- [ ] 在 agent loop 中實作工具呼叫次數限制
-- [ ] 新增每分鐘請求數限制
-- [ ] 記錄異常使用模式
+- [x] 在 agent loop 中實作工具呼叫次數限制
+- [x] 新增每分鐘請求數限制
+- [x] 記錄異常使用模式
 
 ---
 
@@ -140,9 +140,9 @@ if !strings.HasPrefix(absTargetPath, s.Workspace) {
 **問題**: 工具參數缺乏嚴格驗證。
 
 **修復任務**:
-- [ ] 為所有工具實作 JSON Schema 驗證
-- [ ] 限制路徑字元 (僅允許安全字元)
-- [ ] 限制命令長度
+- [x] 為所有工具實作 JSON Schema 驗證
+- [x] 限制路徑字元 (僅允許安全字元)
+- [x] 限制命令長度
 
 ---
 
@@ -174,9 +174,11 @@ if !strings.HasPrefix(absTargetPath, s.Workspace) {
 | `pkg/tools/sandbox.go` | Critical |
 | `pkg/config/config.go` | High |
 | `pkg/agent/memory.go` | High |
+| `pkg/agent/context.go` | High |
 | `pkg/providers/openai_compat.go` | High |
 | `pkg/tools/filesystem.go` | Medium |
 | `config/config.example.json` | High |
+| `README.md` | High |
 
 ---
 

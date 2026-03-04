@@ -60,6 +60,8 @@ func Load(configPath string) (*Config, error) {
 
 	// 2. Load from JSON if exists
 	if _, err := os.Stat(expandedPath); err == nil {
+		checkFilePermissions(expandedPath)
+
 		data, err := os.ReadFile(expandedPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read config file: %w", err)
@@ -67,6 +69,7 @@ func Load(configPath string) (*Config, error) {
 		if err := json.Unmarshal(data, cfg); err != nil {
 			return nil, fmt.Errorf("failed to parse config file: %w", err)
 		}
+		warnIfSensitiveDataPresent(data)
 	}
 
 	// 3. Apply Environment Variable overrides
@@ -74,6 +77,9 @@ func Load(configPath string) (*Config, error) {
 
 	// Expand workspace path
 	cfg.Agents.Defaults.Workspace = expandHome(cfg.Agents.Defaults.Workspace)
+
+	// Check workspace directory isolation
+	_ = checkWorkspaceIsolation(cfg.Agents.Defaults.Workspace)
 
 	return cfg, nil
 }
@@ -190,4 +196,60 @@ func expandHome(path string) string {
 		}
 	}
 	return path
+}
+
+func warnIfSensitiveDataPresent(data []byte) {
+	content := string(data)
+	sensitiveKeys := []string{"apiKey", "botToken", "APikey", "token"}
+
+	for _, key := range sensitiveKeys {
+		if idx := strings.Index(content, `"`+key+`"`); idx != -1 {
+			start := idx + len(key) + 3
+			if start < len(content) {
+				start := start
+				for ; start < len(content) && (content[start] == ' ' || content[start] == ':'); start++ {
+				}
+				if start < len(content) && content[start] == '"' {
+					end := start + 1
+					for ; end < len(content) && content[end] != '"'; end++ {
+					}
+					value := content[start+1 : end]
+					if value != "" && value != "YOUR_" && !strings.HasPrefix(value, "PLACEHOLDER") && !strings.HasPrefix(value, "example") {
+						fmt.Println("WARNING: Sensitive data detected in config file. Do NOT commit config.json with real API keys or tokens to version control!")
+						fmt.Println("Use environment variables instead (see .env file).")
+						return
+					}
+				}
+			}
+		}
+	}
+}
+
+func checkFilePermissions(path string) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return
+	}
+	mode := info.Mode().Perm()
+	if mode&0077 != 0 {
+		fmt.Printf("WARNING: Config file %s has overly permissive permissions (%o). Consider restricting to 0600.\n", path, mode)
+	}
+}
+
+func checkWorkspaceIsolation(workspace string) error {
+	info, err := os.Stat(workspace)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("workspace is not a directory: %s", workspace)
+	}
+	mode := info.Mode().Perm()
+	if mode&0077 != 0 {
+		fmt.Printf("WARNING: Workspace directory %s has overly permissive permissions (%o). Consider restricting to 0700.\n", workspace, mode)
+	}
+	return nil
 }

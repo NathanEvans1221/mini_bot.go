@@ -81,6 +81,10 @@ func validateCommand(cmd string) bool {
 		return false
 	}
 
+	if len(cmd) > 500 {
+		return false
+	}
+
 	baseCmd := strings.ToLower(fields[0])
 
 	if _, ok := allowedCommands[baseCmd]; ok {

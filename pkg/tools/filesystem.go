@@ -4,8 +4,18 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 )
+
+var safePathChars = regexp.MustCompile(`^[a-zA-Z0-9_/\\.:\-]+$`)
+
+func isValidPathChars(path string) bool {
+	if strings.Contains(path, "..") {
+		return false
+	}
+	return safePathChars.MatchString(path)
+}
 
 type ReadFileTool struct {
 	Sandbox *Sandbox
@@ -24,6 +34,10 @@ func (t *ReadFileTool) Parameters() map[string]any {
 }
 func (t *ReadFileTool) Execute(ctx context.Context, args map[string]any) *ToolResult {
 	path, _ := args["path"].(string)
+	if !isValidPathChars(path) {
+		return &ToolResult{ForLLM: "Error: path contains invalid characters", IsError: true}
+	}
+
 	safePath, err := t.Sandbox.CheckPath(path)
 	if err != nil {
 		return &ToolResult{ForLLM: err.Error(), IsError: true}
@@ -68,6 +82,10 @@ func (t *WriteFileTool) Execute(ctx context.Context, args map[string]any) *ToolR
 	path, _ := args["path"].(string)
 	content, _ := args["content"].(string)
 
+	if !isValidPathChars(path) {
+		return &ToolResult{ForLLM: "Error: path contains invalid characters", IsError: true}
+	}
+
 	safePath, err := t.Sandbox.CheckPath(path)
 	if err != nil {
 		return &ToolResult{ForLLM: err.Error(), IsError: true}
@@ -98,6 +116,10 @@ func (t *AppendFileTool) Parameters() map[string]any {
 func (t *AppendFileTool) Execute(ctx context.Context, args map[string]any) *ToolResult {
 	path, _ := args["path"].(string)
 	content, _ := args["content"].(string)
+
+	if !isValidPathChars(path) {
+		return &ToolResult{ForLLM: "Error: path contains invalid characters", IsError: true}
+	}
 
 	safePath, err := t.Sandbox.CheckPath(path)
 	if err != nil {
@@ -141,6 +163,10 @@ func (t *EditFileTool) Execute(ctx context.Context, args map[string]any) *ToolRe
 	startLineFl, _ := args["start_line"].(float64)
 	endLineFl, _ := args["end_line"].(float64)
 	newContent, _ := args["new_content"].(string)
+
+	if !isValidPathChars(path) {
+		return &ToolResult{ForLLM: "Error: path contains invalid characters", IsError: true}
+	}
 
 	startLine := int(startLineFl)
 	endLine := int(endLineFl)
@@ -194,6 +220,10 @@ func (t *ListDirTool) Parameters() map[string]any {
 }
 func (t *ListDirTool) Execute(ctx context.Context, args map[string]any) *ToolResult {
 	path, _ := args["path"].(string)
+	if !isValidPathChars(path) {
+		return &ToolResult{ForLLM: "Error: path contains invalid characters", IsError: true}
+	}
+
 	safePath, err := t.Sandbox.CheckPath(path)
 	if err != nil {
 		return &ToolResult{ForLLM: err.Error(), IsError: true}
