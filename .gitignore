@@ -37,3 +37,6 @@ go.work.sum
 workspace/sessions/
 workspace/memory/
 *.log
+
+.python-version
+
